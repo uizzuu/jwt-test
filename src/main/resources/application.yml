@@ -1,0 +1,23 @@
+#MySql 셋팅
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/jwt_db
+    username: root
+    password: 1111
+  sql:
+    init:
+      mode: never
+      # always : 매번, embedded : 내장 DB만, never : 모든 동작 안함
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate :
+        show_sql: true
+        format_sql: true
+
+
+  jwt:
+    secret: vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT
