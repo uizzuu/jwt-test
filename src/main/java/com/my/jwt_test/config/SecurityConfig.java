@@ -3,6 +3,7 @@ package com.my.jwt_test.config;
 import com.my.jwt_test.mjwt.JWTFilter;
 import com.my.jwt_test.mjwt.JWTUtil;
 import com.my.jwt_test.mjwt.LoginFilter;
+import com.my.jwt_test.oauth2.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,17 +18,29 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    /** AuthenticationManager가 인자로 받을
-     * AuthenticationConfiguration 객체 생성자 주입 */
+
+    /**
+     * AuthenticationManager가 인자로 받을
+     * AuthenticationConfiguration 객체 생성자 주입
+     */
+    // OAuth2SuccessHandler 주입
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil) {
 
+    public SecurityConfig(
+            OAuth2SuccessHandler oAuth2SuccessHandler,
+            AuthenticationConfiguration authenticationConfiguration,
+            JWTUtil jwtUtil) {
+
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
     }
 
-    /** AuthenticationManager Bean 등록 */
+    /**
+     * AuthenticationManager Bean 등록
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 
@@ -53,10 +66,20 @@ public class SecurityConfig {
         /** 경로별 인가작업 */
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/login", "/", "/join").permitAll()
+                        .requestMatchers("/", "/login", "/join", "/oauth2/**").permitAll()
                         /**"/login" Controller를 만들지 않아도 Security 에서 잡음*/
-                           .requestMatchers("/admin").hasRole("ADMIN")
-                        .anyRequest().authenticated());
+                        .requestMatchers("/admin").hasRole("ADMIN")
+                        .requestMatchers("/").permitAll()
+                        .anyRequest().authenticated())
+                // ✅ 소셜 로그인 활성화
+                .oauth2Login(oauth2 ->
+                        oauth2.loginPage("/login") // 커스텀 로그인 페이지 지정 가능 (없으면 기본 제공)
+                );
+
+        // OAuth2SuccessHandler
+        http
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2SuccessHandler));
 
         //LoginFilter 앞에 JWTFilter 등록
         http
